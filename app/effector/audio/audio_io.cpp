@@ -34,6 +34,20 @@ bool CAudioIO::Initialize(void)
 
     m_pSound->SetWriteFormat(SoundFormatFloat32, 1);
 
+    float tempBuffer[BLOCK_SIZE];
+    for (unsigned j = 0; j < BLOCK_SIZE; ++j)
+    {
+        tempBuffer[j] = 0.0f;
+    }
+    
+    for (unsigned i = 0; i < OUTPUT_PREFILL_BLOCKS; ++i)
+    {
+        if (!WriteAudioData(tempBuffer))
+        {
+            return false;
+        }
+    }
+
     if (!m_pSound->Start())
     {
         return false;
@@ -80,3 +94,22 @@ bool CAudioIO::WriteAudioData(const float* buffer)
     return m_pSound->Write (m_OutBuffer, BLOCK_SIZE * sizeof(float)) == BLOCK_SIZE * sizeof(float);
 }
 
+unsigned CAudioIO::GetInputQueued(void)
+{
+    if (!m_pSound)
+    {
+        return 0;
+    }
+
+    return m_pSound->GetReadQueueFramesAvail();
+}
+
+unsigned CAudioIO::GetOutputQueued(void)
+{
+    if (!m_pSound)
+    {
+        return 0;
+    }
+
+    return m_pSound->GetQueueFramesAvail();
+}

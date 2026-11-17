@@ -12,6 +12,9 @@ public:
     bool ReadAudioData(float* buffer);
     bool WriteAudioData(const float* buffer);
     bool IsConnected(void);
+    unsigned GetInputQueued(void);
+    unsigned GetOutputQueued(void);
+    
 private:
     CUSBSoundBaseDevice *m_pSound;
     float m_OutBuffer[BLOCK_SIZE];
