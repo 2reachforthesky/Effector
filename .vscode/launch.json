@@ -8,8 +8,10 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "c:/Users/243117/Desktop/Effector/app/effector/effects",
-      "program": "c:/Users/243117/Desktop/Effector/app/effector/effects/build/Debug/outDebug",
+
+      "cwd": "//wsl.localhost/Ubuntu-24.04/home/user1/circle/app/effector",
+      "program": "//wsl.localhost/Ubuntu-24.04/home/user1/circle/app/effector/build/Debug/outDebug",
+
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
