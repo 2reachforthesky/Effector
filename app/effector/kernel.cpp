@@ -25,6 +25,7 @@
 static const char FromKernel[] = "kernel";
 
 CKernel::CKernel (void) :
+	m_Serial (&m_Interrupt),
 	m_Timer (&m_Interrupt),
 	m_Logger (m_Options.GetLogLevel (), &m_Timer),
 	m_USBHCI (&m_Interrupt, &m_Timer, FALSE),
@@ -43,6 +44,11 @@ boolean CKernel::Initialize (void)
 
 	if (bOK)
 	{
+		bOK = m_Interrupt.Initialize ();
+	}
+
+	if (bOK)
+	{
 		bOK = m_Serial.Initialize (115200);
 	}
 
@@ -55,12 +61,7 @@ boolean CKernel::Initialize (void)
 		}
 
 		bOK = m_Logger.Initialize (pTarget);
-	}
-
-	if (bOK)
-	{
-		bOK = m_Interrupt.Initialize ();
-	}
+	}	
 
 	if (bOK)
 	{
@@ -86,7 +87,7 @@ boolean CKernel::Initialize (void)
 TShutdownMode CKernel::Run (void)
 {
 	m_Logger.Write (FromKernel, LogNotice, "Compile time: " __DATE__ " " __TIME__);
-
+	unsigned nTotal = 0;
 	unsigned nReadOK = 0;
 	unsigned nWriteNG = 0;
 	unsigned nLastTicks = m_Timer.GetTicks ();
@@ -98,7 +99,8 @@ TShutdownMode CKernel::Run (void)
 		if (m_AudioIO.ReadAudioData (buffer))
 		{
 			nReadOK++;
-
+			nTotal++;
+			
 			if (!m_AudioIO.WriteAudioData (buffer))
 			{
 				nWriteNG++;
@@ -107,7 +109,7 @@ TShutdownMode CKernel::Run (void)
 
 		if (m_Timer.GetTicks () - nLastTicks >= HZ)
 		{
-			m_Logger.Write (FromKernel, LogNotice, "read %u, write NG %u", nReadOK, nWriteNG);
+			m_Logger.Write (FromKernel, LogNotice, "read %u, write NG %u, total %u, inq %u, outq %u", nReadOK, nWriteNG, nTotal, m_AudioIO.GetInputQueued(), m_AudioIO.GetOutputQueued());
 			nReadOK = 0;
 			nWriteNG = 0;
 			nLastTicks += HZ;
