@@ -87,24 +87,30 @@ TShutdownMode CKernel::Run (void)
 {
 	m_Logger.Write (FromKernel, LogNotice, "Compile time: " __DATE__ " " __TIME__);
 
-	// copy sound data
+	unsigned nReadOK = 0;
+	unsigned nWriteNG = 0;
+	unsigned nLastTicks = m_Timer.GetTicks ();
+
 	for (unsigned nCount = 0; 1; nCount++)
 	{
-	float buffer[BLOCK_SIZE];
+		float buffer[BLOCK_SIZE];
+
 		if (m_AudioIO.ReadAudioData (buffer))
 		{
-			if (m_AudioIO.WriteAudioData (buffer))
+			nReadOK++;
+
+			if (!m_AudioIO.WriteAudioData (buffer))
 			{
-				// success
-			}
-			else
-			{
-				m_Logger.Write (FromKernel, LogWarning, "Sound output queue full");
+				nWriteNG++;
 			}
 		}
-		else
+
+		if (m_Timer.GetTicks () - nLastTicks >= HZ)
 		{
-			m_Logger.Write (FromKernel, LogWarning, "Sound data dropped");
+			m_Logger.Write (FromKernel, LogNotice, "read %u, write NG %u", nReadOK, nWriteNG);
+			nReadOK = 0;
+			nWriteNG = 0;
+			nLastTicks += HZ;
 		}
 
 		m_Scheduler.Yield ();
