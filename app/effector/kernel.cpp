@@ -111,9 +111,9 @@ TShutdownMode CKernel::Run (void)
 
 		if (m_Timer.GetTicks () - nLastTicks >= HZ)
 		{
-						m_Logger.Write (FromKernel, LogNotice, "read %u, write NG %u, total %u, inq %u, outq %u, drop %u", nReadOK, nWriteNG, nTotal, m_AudioIO.GetInputQueued(), m_AudioIO.GetOutputQueued(), m_AudioIO.GetDroppedFrames());
-			nReadOK = 0;
+			m_Logger.Write (FromKernel, LogNotice, "read %u, write NG %u, total %u, inq %u, outq %u, drop %u, ins %u, outmin %u", nReadOK, nWriteNG, nTotal, m_AudioIO.GetInputQueued(), m_AudioIO.GetOutputQueued(), m_AudioIO.GetDroppedFrames(), m_AudioIO.GetInsertedFrames(), m_AudioIO.GetOutputQueuedMin());
 			nWriteNG = 0;
+			nReadOK = 0;
 			nLastTicks += HZ;
 		}
 
