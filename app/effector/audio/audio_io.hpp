@@ -14,8 +14,14 @@ public:
     bool IsConnected(void);
     unsigned GetInputQueued(void);
     unsigned GetOutputQueued(void);
-    
-private:
+    unsigned GetDroppedFrames(void);
+    unsigned GetOutputQueuedMin(void);
+    unsigned GetInsertedFrames(void);
+
+    private:
     CUSBSoundBaseDevice *m_pSound;
-    float m_OutBuffer[BLOCK_SIZE];
+    float m_OutBuffer[BLOCK_SIZE + 1];   // ← +1 する（足す1サンプル分の場所）
+    unsigned m_nDroppedFrames;
+    unsigned m_nInsertedFrames;          // ← 新しく足す
+    unsigned m_nOutQueuedMin;
 };
