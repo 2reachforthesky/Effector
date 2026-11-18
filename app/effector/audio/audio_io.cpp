@@ -1,7 +1,8 @@
 #include "audio_io.hpp"
 
 CAudioIO::CAudioIO(void)
-    : m_pSound(0)
+    : m_pSound(0),
+      m_nDroppedFrames(0)
 {
 
 }
@@ -80,9 +81,19 @@ bool CAudioIO::WriteAudioData(const float* buffer)
         return false;
     }
 
-    if (m_pSound->GetQueueSizeFrames () - m_pSound->GetQueueFramesAvail () < BLOCK_SIZE)
+    unsigned nQueued = m_pSound->GetQueueFramesAvail ();
+
+    if (m_pSound->GetQueueSizeFrames () - nQueued < BLOCK_SIZE)
     {
         return false;
+    }
+
+    // 出力キューに溜まりすぎていたら、このブロックの最後の1サンプルを捨てる
+    unsigned nFrames = BLOCK_SIZE;
+    if (nQueued > OUTPUT_MAX_QUEUED_FRAMES)
+    {
+        nFrames = BLOCK_SIZE - 1;
+        m_nDroppedFrames++;
     }
 
     for (unsigned i = 0; i < BLOCK_SIZE; ++i)
@@ -91,7 +102,9 @@ bool CAudioIO::WriteAudioData(const float* buffer)
         if (m_OutBuffer[i] > 1.0f) m_OutBuffer[i] = 1.0f;
         else if (m_OutBuffer[i] < -1.0f) m_OutBuffer[i] = -1.0f;
     }
-    return m_pSound->Write (m_OutBuffer, BLOCK_SIZE * sizeof(float)) == BLOCK_SIZE * sizeof(float);
+
+    const int nBytes = (int) (nFrames * sizeof (float));
+    return m_pSound->Write (m_OutBuffer, nBytes) == nBytes;
 }
 
 unsigned CAudioIO::GetInputQueued(void)
@@ -112,4 +125,9 @@ unsigned CAudioIO::GetOutputQueued(void)
     }
 
     return m_pSound->GetQueueFramesAvail();
+}
+
+unsigned CAudioIO::GetDroppedFrames(void)
+{
+    return m_nDroppedFrames;
 }

@@ -13,6 +13,7 @@
 #include <circle/types.h>
 #include <circle/sched/scheduler.h>
 #include "audio/audio_io.hpp"
+#include "effects/reverb.hpp"
 
 enum TShutdownMode
 {
@@ -41,10 +42,11 @@ private:
 	CInterruptSystem	m_Interrupt;
 	CTimer			m_Timer;
 	CLogger			m_Logger;
+	CScheduler m_Scheduler;
 	CUSBHCIDevice		m_USBHCI;
 
 	CAudioIO		m_AudioIO;
-	CScheduler m_Scheduler;
+	Reverb			m_Reverb;
 };
 
 #endif

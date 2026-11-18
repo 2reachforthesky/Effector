@@ -75,6 +75,7 @@ boolean CKernel::Initialize (void)
 
 	if (bOK)
 	{
+		//m_Reverb.Prepare (SAMPLE_RATE);
 		bOK = m_AudioIO.Initialize ();
 	}else
 	{
@@ -100,7 +101,8 @@ TShutdownMode CKernel::Run (void)
 		{
 			nReadOK++;
 			nTotal++;
-			
+			//m_Reverb.Process (buffer, BLOCK_SIZE);
+
 			if (!m_AudioIO.WriteAudioData (buffer))
 			{
 				nWriteNG++;
@@ -109,7 +111,7 @@ TShutdownMode CKernel::Run (void)
 
 		if (m_Timer.GetTicks () - nLastTicks >= HZ)
 		{
-			m_Logger.Write (FromKernel, LogNotice, "read %u, write NG %u, total %u, inq %u, outq %u", nReadOK, nWriteNG, nTotal, m_AudioIO.GetInputQueued(), m_AudioIO.GetOutputQueued());
+						m_Logger.Write (FromKernel, LogNotice, "read %u, write NG %u, total %u, inq %u, outq %u, drop %u", nReadOK, nWriteNG, nTotal, m_AudioIO.GetInputQueued(), m_AudioIO.GetOutputQueued(), m_AudioIO.GetDroppedFrames());
 			nReadOK = 0;
 			nWriteNG = 0;
 			nLastTicks += HZ;

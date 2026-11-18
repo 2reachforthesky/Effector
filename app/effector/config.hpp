@@ -8,6 +8,7 @@
 #define QUEUE_BLOCKS		4	// size of the TX/RX queues in blocks
 #define PREFILL_BLOCKS		2	// silence written before start
 #define OUTPUT_PREFILL_BLOCKS    4	// silence written before start
+#define OUTPUT_MAX_QUEUED_FRAMES	512	// outq がこれを超えたら1サンプル捨てる
 
 #define INPUT_LEFT_CHANNEL	true	// false: use right channel of AG03
 

@@ -14,8 +14,10 @@ public:
     bool IsConnected(void);
     unsigned GetInputQueued(void);
     unsigned GetOutputQueued(void);
+    unsigned GetDroppedFrames(void);
     
 private:
     CUSBSoundBaseDevice *m_pSound;
     float m_OutBuffer[BLOCK_SIZE];
+    unsigned m_nDroppedFrames;
 };
