@@ -6,7 +6,7 @@
 
 CIRCLEHOME = ../..
 
-OBJS	= main.o kernel.o audio/audio_io.o
+OBJS	= main.o kernel.o audio/audio_io.o effects/reverb.o
 
 LIBS	+= $(CIRCLEHOME)/lib/sched/libsched.a \
 	   $(CIRCLEHOME)/lib/sound/libsound.a \

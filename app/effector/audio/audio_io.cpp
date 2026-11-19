@@ -1,7 +1,10 @@
 #include "audio_io.hpp"
 
 CAudioIO::CAudioIO(void)
-    : m_pSound(0)
+    : m_pSound(0),
+      m_nDroppedFrames(0),
+      m_nInsertedFrames(0),
+      m_nOutQueuedMin((unsigned) -1)
 {
 
 }
@@ -80,9 +83,31 @@ bool CAudioIO::WriteAudioData(const float* buffer)
         return false;
     }
 
-    if (m_pSound->GetQueueSizeFrames () - m_pSound->GetQueueFramesAvail () < BLOCK_SIZE)
+    unsigned nQueued = m_pSound->GetQueueFramesAvail ();
+
+    if (nQueued < m_nOutQueuedMin)
+    {
+        m_nOutQueuedMin = nQueued;
+    }
+
+        // 1サンプル足すこともあるので、BLOCK_SIZE + 1 分の空きが必要
+    if (m_pSound->GetQueueSizeFrames () - nQueued < BLOCK_SIZE + 1)
     {
         return false;
+    }
+
+    unsigned nFrames = BLOCK_SIZE;
+    if (nQueued > OUTPUT_MAX_QUEUED_FRAMES)
+    {
+        // 溜まりすぎ：最後の1サンプルを捨てる
+        nFrames = BLOCK_SIZE - 1;
+        m_nDroppedFrames++;
+    }
+    else if (nQueued < OUTPUT_MIN_QUEUED_FRAMES)
+    {
+        // 少なすぎ：最後のサンプルをもう一度書いて1サンプル足す
+        nFrames = BLOCK_SIZE + 1;
+        m_nInsertedFrames++;
     }
 
     for (unsigned i = 0; i < BLOCK_SIZE; ++i)
@@ -91,7 +116,10 @@ bool CAudioIO::WriteAudioData(const float* buffer)
         if (m_OutBuffer[i] > 1.0f) m_OutBuffer[i] = 1.0f;
         else if (m_OutBuffer[i] < -1.0f) m_OutBuffer[i] = -1.0f;
     }
-    return m_pSound->Write (m_OutBuffer, BLOCK_SIZE * sizeof(float)) == BLOCK_SIZE * sizeof(float);
+    m_OutBuffer[BLOCK_SIZE] = m_OutBuffer[BLOCK_SIZE - 1];
+
+    const int nBytes = (int) (nFrames * sizeof (float));
+    return m_pSound->Write (m_OutBuffer, nBytes) == nBytes;
 }
 
 unsigned CAudioIO::GetInputQueued(void)
@@ -112,4 +140,21 @@ unsigned CAudioIO::GetOutputQueued(void)
     }
 
     return m_pSound->GetQueueFramesAvail();
+}
+
+unsigned CAudioIO::GetDroppedFrames(void)
+{
+    return m_nDroppedFrames;
+}
+
+unsigned CAudioIO::GetOutputQueuedMin(void)
+{
+    unsigned nMin = m_nOutQueuedMin;
+    m_nOutQueuedMin = (unsigned) -1;
+    return nMin;
+}
+
+unsigned CAudioIO::GetInsertedFrames(void)
+{
+    return m_nInsertedFrames;
 }
