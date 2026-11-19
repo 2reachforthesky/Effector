@@ -51,7 +51,7 @@ class Measure {
         uint64_t m_sumUs; //処理時間の合計
         uint32_t m_blockCount; //測った回数
         ProcessStats m_stats; //処理時間の統計
-        LatencyResult m_result; //往復遅延の測定結果
+        LatencyResult m_result; //往復遅延の結果
 
 };
 
