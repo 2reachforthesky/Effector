@@ -161,7 +161,7 @@ private:
 	volatile boolean m_bSyncEPActive;
 	DMA_BUFFER (u32, m_SyncEPBuffer, 1);
 	unsigned m_nSyncAccu;
-
+	u32 m_nFeedbackValue;		// 最新のフィードバック値（Q16.16）。0 ＝ まだ受け取っていない
 	u8 m_uchClockSourceID;
 	u8 m_uchSelectorUnitID;
 	u8 m_uchFeatureUnitID[MaxTerminals];

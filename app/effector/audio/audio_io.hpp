@@ -17,7 +17,12 @@ public:
     unsigned GetDroppedFrames(void);
     unsigned GetOutputQueuedMin(void);
     unsigned GetInsertedFrames(void);
-
+    void GetTXStats (unsigned *Packets,
+                    unsigned *pFrames,
+                    unsigned *pErroes,
+                    unsigned *pMinFrames,
+                    unsigned *pMaxFrames);
+    
     private:
     CUSBSoundBaseDevice *m_pSound;
     float m_OutBuffer[BLOCK_SIZE + 1];   // ← +1 する（足す1サンプル分の場所）
