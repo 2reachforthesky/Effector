@@ -158,3 +158,16 @@ unsigned CAudioIO::GetInsertedFrames(void)
 {
     return m_nInsertedFrames;
 }
+
+void CAudioIO::GetTXStats (unsigned *pPackets,
+                           unsigned *pFrames,
+                           unsigned *pErroes,
+                           unsigned *pMinFrames,
+                           unsigned *pMaxFrames)
+{
+    *pPackets = *pFrames = *pErroes = *pMinFrames = *pMaxFrames = 0;
+    if (m_pSound)
+    {
+        m_pSound->GetTXStats (pPackets, pFrames, pErroes, pMinFrames, pMaxFrames);
+    }
+}

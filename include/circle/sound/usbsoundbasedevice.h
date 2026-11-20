@@ -61,6 +61,12 @@ public:
 	/// \return Pointer to sound controller object
 	CSoundController *GetController (void) override;
 
+	void GetTXStats (unsigned *Packets,
+		unsigned *pFrames,
+		unsigned *pErroes,
+		unsigned *pMinFrames,
+		unsigned *pMaxFrames);
+
 protected:
 	/// \brief May override this to provide the sound samples
 	/// \param pBuffer    Buffer where the samples have to be placed
@@ -134,6 +140,12 @@ private:
 	CUSBSoundController *m_pSoundController;
 
 	TRegistrationHandle m_hRemoveRegistration;
+
+	volatile unsigned m_nStatTXPackets;
+	volatile unsigned m_nStatTXFrames;
+	volatile unsigned m_nStatTXErrors;
+	volatile unsigned m_nStatTXMinFrames;
+	volatile unsigned m_nStatTXMaxFrames;
 };
 
 #endif

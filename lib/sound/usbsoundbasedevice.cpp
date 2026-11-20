@@ -47,7 +47,12 @@ CUSBSoundBaseDevice::CUSBSoundBaseDevice (unsigned nSampleRate, TDeviceMode Devi
 	m_pTXBuffer {nullptr, nullptr},
 	m_pRXBuffer {nullptr, nullptr},
 	m_pSoundController (nullptr),
-	m_hRemoveRegistration (0)
+	m_hRemoveRegistration (0),
+	m_nStatTXPackets (0),
+	m_nStatTXFrames (0),
+	m_nStatTXErrors (0),
+	m_nStatTXMinFrames (0xFFFFFFFF),
+	m_nStatTXMaxFrames (0)
 {
 	unsigned nHWTXChannels = 2;
 	unsigned nHWRXChannels = 2;
@@ -378,6 +383,18 @@ boolean CUSBSoundBaseDevice::SendChunk (void)
 		return FALSE;
 	}
 
+	unsigned nFrames = nChunkSize / GetHWTXChannels ();
+	m_nStatTXPackets++;
+	m_nStatTXFrames += nFrames;
+	if (nFrames < m_nStatTXMinFrames)
+	{
+		m_nStatTXMinFrames = nFrames;
+	}
+	if (nFrames > m_nStatTXMaxFrames)
+	{
+		m_nStatTXMaxFrames = nFrames;
+	}
+
 	m_nTXCurrentBuffer ^= 1;
 
 	return TRUE;
@@ -411,6 +428,11 @@ boolean CUSBSoundBaseDevice::ReceiveChunk (void)
 void CUSBSoundBaseDevice::TXCompletionRoutine (unsigned nBytesTransferred)
 {
 	boolean bContinue = FALSE;
+
+	if (nBytesTransferred == 0)
+	{
+		m_nStatTXErrors++;
+	}
 
 	m_SpinLock.Acquire ();
 
@@ -653,4 +675,26 @@ boolean CUSBSoundBaseDevice::SetTXInterface (unsigned nInterface)
 	}
 
 	return TRUE;
+}
+
+void CUSBSoundBaseDevice::GetTXStats (unsigned *pPackets,
+										unsigned *pFrames,
+										unsigned *pErrors,
+										unsigned *pMinFrames,
+										unsigned *pMaxFrames)
+{
+	m_SpinLock.Acquire ();
+
+	*pPackets = m_nStatTXPackets;
+	m_nStatTXPackets = 0;
+	*pFrames = m_nStatTXFrames;
+	m_nStatTXFrames = 0;
+	*pErrors = m_nStatTXErrors;
+	m_nStatTXErrors = 0;
+	*pMinFrames = m_nStatTXMinFrames;
+	m_nStatTXMinFrames = 0xFFFFFFFF;
+	*pMaxFrames = m_nStatTXMaxFrames;
+	m_nStatTXMaxFrames = 0;
+
+	m_SpinLock.Release ();
 }

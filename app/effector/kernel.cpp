@@ -24,6 +24,11 @@
 
 static const char FromKernel[] = "kernel";
 
+extern volatile unsigned g_nXHCIRingUnderruns;
+extern volatile unsigned g_nXHCIRingOverruns;
+extern volatile unsigned g_nFeedbackCount;
+extern volatile unsigned g_nFeedbackLast;
+
 CKernel::CKernel (void) :
 	m_Serial (&m_Interrupt),
 	m_Timer (&m_Interrupt),
@@ -112,6 +117,11 @@ TShutdownMode CKernel::Run (void)
 		if (m_Timer.GetTicks () - nLastTicks >= HZ)
 		{
 			m_Logger.Write (FromKernel, LogNotice, "read %u, write NG %u, total %u, inq %u, outq %u, drop %u, ins %u, outmin %u", nReadOK, nWriteNG, nTotal, m_AudioIO.GetInputQueued(), m_AudioIO.GetOutputQueued(), m_AudioIO.GetDroppedFrames(), m_AudioIO.GetInsertedFrames(), m_AudioIO.GetOutputQueuedMin());
+			unsigned nPk, nFr, nErr, nMin, nMax;
+			m_AudioIO.GetTXStats (&nPk, &nFr, &nErr, &nMin, &nMax);
+			m_Logger.Write (FromKernel, LogNotice, "tx pkt %u, frames %u, err %u, chunk %u-%u, urun %u, orun %u", nPk, nFr, nErr, nMin, nMax, g_nXHCIRingUnderruns, g_nXHCIRingOverruns);
+						m_Logger.Write (FromKernel, LogNotice, "fb count %u, value 0x%08X", g_nFeedbackCount, g_nFeedbackLast);
+			g_nFeedbackCount = 0;
 			nWriteNG = 0;
 			nReadOK = 0;
 			nLastTicks += HZ;

@@ -31,6 +31,9 @@
 #include <circle/debug.h>
 #include <assert.h>
 
+volatile unsigned g_nXHCIRingUnderruns = 0;
+volatile unsigned g_nXHCIRingOverruns = 0;
+
 static const char From[] = "xhciep";
 
 CXHCIEndpoint::CXHCIEndpoint (CXHCIUSBDevice *pDevice, CXHCIDevice *pXHCIDevice)
@@ -446,6 +449,13 @@ void CXHCIEndpoint::TransferEvent (u8 uchCompletionCode, u32 nTransferLength)
 		 || uchCompletionCode == XHCI_TRB_COMPLETION_CODE_RING_OVERRUN)
 	{
 		// these events are not URB related, so just ignore them
+		if (uchCompletionCode == XHCI_TRB_COMPLETION_CODE_RING_UNDERRUN){
+			g_nXHCIRingUnderruns++;
+		}
+		else
+		{
+			g_nXHCIRingOverruns++;
+		}
 		return;
 	}
 	else if (pURB->GetEndpoint ()->GetType () != EndpointTypeIsochronous)

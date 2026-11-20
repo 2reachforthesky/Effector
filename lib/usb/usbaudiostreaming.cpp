@@ -106,6 +106,10 @@ Release 1.0 and 2.0, https://usb.org/documents
 #include <circle/util.h>
 #include <assert.h>
 
+// 調査用
+volatile unsigned g_nFeedbackCount = 0;
+volatile unsigned g_nFeedbackLast = 0;
+
 // convert 3-byte sample rate value to an unsigned
 #define RATE2UNSIGNED(rate)	(  (unsigned) (rate)[0]		\
 				 | (unsigned) (rate)[1] << 8	\
@@ -129,6 +133,7 @@ CUSBAudioStreamingDevice::CUSBAudioStreamingDevice (CUSBFunction *pFunction)
 	m_nPacketsPerChunk (0),
 	m_bSyncEPActive (FALSE),
 	m_nSyncAccu (0),
+		m_nFeedbackValue (0),
 	m_uchClockSourceID (USB_AUDIO_UNDEFINED_UNIT_ID),
 	m_uchSelectorUnitID (USB_AUDIO_UNDEFINED_UNIT_ID),
 	From ("uaudio")
@@ -770,7 +775,17 @@ boolean CUSBAudioStreamingDevice::SendChunk (const void *pBuffer, unsigned nChun
 	pURB->SetCompletionRoutine (CompletionHandler, pParam, (void *) pCompletionRoutine);
 
 	boolean bOK = GetHost ()->SubmitAsyncRequest (pURB);
-
+	// フィードバック値をパケットごとに積み上げて、次のパケットのサンプル数を決める
+	// （端数が1を超えたパケットだけ +1 になるので、まとめ送りが起きない）
+	if (   bOK
+	    && m_pEndpointSync
+	    && m_nFeedbackValue)
+	{
+		m_nSyncAccu += m_nFeedbackValue;
+		m_nChunkSizeBytes = (m_nSyncAccu >> 16) * m_nChannels * m_nSubframeSize;
+		m_nSyncAccu &= 0xFFFF;
+	}
+	
 	if (   bOK
 	    && m_pEndpointSync
 	    && !m_bSyncEPActive)
@@ -1070,24 +1085,20 @@ void CUSBAudioStreamingDevice::SyncCompletionHandler (CUSBRequest *pURB, void *p
 
 	assert (pThis->m_bSyncEPActive);
 
-	if (bOK)
+		if (bOK)
 	{
+		g_nFeedbackCount++;					// 調査用
+		g_nFeedbackLast = pThis->m_SyncEPBuffer[0];		// 調査用
+
+		u32 nValue = pThis->m_SyncEPBuffer[0];
 		if (bFormat10_14)
 		{
-			// Q10.14 format (FS)
-			pThis->m_nSyncAccu += pThis->m_SyncEPBuffer[0] & 0xFFFFFF;
-			pThis->m_nChunkSizeBytes =   (pThis->m_nSyncAccu >> 14)
-						   * pThis->m_nChannels * pThis->m_nSubframeSize;
-			pThis->m_nSyncAccu &= 0x3FFF;
+			// フルスピードの Q10.14 形式を、Q16.16 にそろえる
+			nValue = (nValue & 0xFFFFFF) << 2;
 		}
-		else
-		{
-			// Q16.16 format (HS)
-			pThis->m_nSyncAccu += pThis->m_SyncEPBuffer[0];
-			pThis->m_nChunkSizeBytes =   (pThis->m_nSyncAccu >> 16)
-						   * pThis->m_nChannels * pThis->m_nSubframeSize;
-			pThis->m_nSyncAccu &= 0xFFFF;
-		}
+
+		// 値を覚えるだけ。送るサンプル数は SendChunk でパケットごとに決める
+		pThis->m_nFeedbackValue = nValue;
 	}
 
 	pThis->m_bSyncEPActive = FALSE;
