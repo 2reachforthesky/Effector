@@ -775,8 +775,6 @@ boolean CUSBAudioStreamingDevice::SendChunk (const void *pBuffer, unsigned nChun
 	pURB->SetCompletionRoutine (CompletionHandler, pParam, (void *) pCompletionRoutine);
 
 	boolean bOK = GetHost ()->SubmitAsyncRequest (pURB);
-	// フィードバック値をパケットごとに積み上げて、次のパケットのサンプル数を決める
-	// （端数が1を超えたパケットだけ +1 になるので、まとめ送りが起きない）
 	if (   bOK
 	    && m_pEndpointSync
 	    && m_nFeedbackValue)
@@ -1093,11 +1091,9 @@ void CUSBAudioStreamingDevice::SyncCompletionHandler (CUSBRequest *pURB, void *p
 		u32 nValue = pThis->m_SyncEPBuffer[0];
 		if (bFormat10_14)
 		{
-			// フルスピードの Q10.14 形式を、Q16.16 にそろえる
 			nValue = (nValue & 0xFFFFFF) << 2;
 		}
 
-		// 値を覚えるだけ。送るサンプル数は SendChunk でパケットごとに決める
 		pThis->m_nFeedbackValue = nValue;
 	}
 
