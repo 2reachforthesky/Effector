@@ -25,7 +25,7 @@ void Reverb::Process(float* samples, int count)
     for (int i = 0; i < count; i++)
     {
         float dry = samples[i];
-        float in = samples[i] * 0.1f;
+        float in = samples[i] * 0.03f;
         float sum = comb0_.Process(in) + comb1_.Process(in) + comb2_.Process(in) + comb3_.Process(in);
         float wet = ap0_.Process(sum);
                  wet = ap1_.Process(wet); 
